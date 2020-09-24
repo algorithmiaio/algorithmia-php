@@ -236,15 +236,21 @@ class HttpClient {
         return $query_param_array;
     }
 
-    private function extractExceptionMessage(\GuzzleHttp\Exception\RequestException $e) {
-        if(is_null($e->getResponse()))
-        {
-            //var_dump($e);
+    private function extractExceptionMessage(\GuzzleHttp\Exception\RequestException $e)
+    {
+        if ($e->getResponse() === null) {
             return $e->getMessage();
         }
-        else{
-            return json_decode( $e->getResponse()->getBody()->getContents() )->error->message;
+
+        $responseContent = $e->getResponse()->getBody()->getContents();
+        if (!empty($responseContent)) {
+            $responseObject = json_decode($responseContent);
+
+            if (json_last_error() == JSON_ERROR_NONE && isset($responseObject->error->message)) {
+                return $responseObject->error->message;
+            }
         }
-            
+
+        return $e->getMessage();
     }
 }
